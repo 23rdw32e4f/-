@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Moon VPN — строгая валидация почты</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        body.moon {
+            background: #000000;
+            color: #eee;
+        }
+        body.moon .vpn-card { background: #0a0a0a; border-color: #2a2a2a; }
+        body.moon .tab-btn { background: #111; border-color: #444; color: #aaa; }
+        body.moon .tab-btn.active { background: #1f1f1f; border-color: #8ab3cf; color: #fff; }
+        body.moon .status { background: #111; border-left-color: #fff; color: #aaa; }
+        body.moon .btn { background: #111; border-color: #444; color: #fff; }
+        body.moon .btn-primary { background: #1f1f1f; border-color: #aaa; }
+        body.moon .key-area { background: #050505; border-color: #3a3a3a; color: #aaa; }
+        body.moon .user-info { background: #0a2a1a; border-color: #2a6e3a; }
+        body.moon .stats-row { background: #050505; border-color: #2a2a2a; color: #aaa; }
+        body.moon .person-item { background: #111; border-left-color: #8ab3cf; color: #ccc; }
+        body.moon .person-name { color: #fff; }
+        body.moon .proxy-card { background: #050505; border-color: #2a4c6e; }
+        body.moon .proxy-type { color: #8ab3cf; }
+        body.moon .coming-soon { border-top-color: #222; color: #4a4a4a; }
+        body.moon footer { color: #2c2c2c; }
+        body.moon .support-btn { background: #111; border-color: #444; color: #aaa; }
+        body.moon .fastest-badge { background: rgba(10,10,10,0.7); color: #9ec0e0; border-left-color: #8ab3cf; }
+        body.moon .theme-toggle { background: #111; border-color: #444; color: #aaa; }
+        
+        body.day {
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+            color: #1e293b;
+        }
+        body.day .vpn-card { background: #ffffff; border-color: #cbd5e1; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        body.day .tab-btn { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+        body.day .tab-btn.active { background: #38bdf8; border-color: #0ea5e9; color: #ffffff; }
+        body.day .status { background: #f8fafc; border-left-color: #38bdf8; color: #475569; }
+        body.day .btn { background: #f1f5f9; border-color: #cbd5e1; color: #1e293b; }
+        body.day .btn-primary { background: #38bdf8; border-color: #0ea5e9; color: #fff; }
+        body.day .key-area { background: #f8fafc; border-color: #cbd5e1; color: #475569; }
+        body.day .user-info { background: #e0f2fe; border-color: #38bdf8; color: #1e293b; }
+        body.day .stats-row { background: #f8fafc; border-color: #cbd5e1; color: #475569; }
+        body.day .person-item { background: #f8fafc; border-left-color: #38bdf8; color: #475569; }
+        body.day .person-name { color: #0f172a; }
+        body.day .proxy-card { background: #f8fafc; border-color: #cbd5e1; }
+        body.day .proxy-type { color: #0284c7; }
+        body.day .coming-soon { border-top-color: #cbd5e1; color: #94a3b8; }
+        body.day footer { color: #94a3b8; }
+        body.day .support-btn { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+        body.day .fastest-badge { background: rgba(255,255,255,0.9); color: #0284c7; border-left-color: #38bdf8; }
+        body.day .theme-toggle { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+        
+        body.red {
+            background: linear-gradient(135deg, #450a0a 0%, #7f1a1a 100%);
+            color: #fecaca;
+        }
+        body.red .vpn-card { background: #2a0a0a; border-color: #991b1b; }
+        body.red .tab-btn { background: #3a0a0a; border-color: #991b1b; color: #fca5a5; }
+        body.red .tab-btn.active { background: #dc2626; border-color: #ef4444; color: #fff; }
+        body.red .status { background: #3a0a0a; border-left-color: #ef4444; color: #fca5a5; }
+        body.red .btn { background: #3a0a0a; border-color: #991b1b; color: #fecaca; }
+        body.red .btn-primary { background: #dc2626; border-color: #ef4444; color: #fff; }
+        body.red .key-area { background: #2a0a0a; border-color: #991b1b; color: #fca5a5; }
+        body.red .user-info { background: #3a0a0a; border-color: #dc2626; color: #fecaca; }
+        body.red .stats-row { background: #2a0a0a; border-color: #991b1b; color: #fca5a5; }
+        body.red .person-item { background: #3a0a0a; border-left-color: #ef4444; color: #fca5a5; }
+        body.red .person-name { color: #fff; }
+        body.red .proxy-card { background: #2a0a0a; border-color: #991b1b; }
+        body.red .proxy-type { color: #f87171; }
+        body.red .coming-soon { border-top-color: #991b1b; color: #7f1a1a; }
+        body.red footer { color: #7f1a1a; }
+        body.red .support-btn { background: #3a0a0a; border-color: #991b1b; color: #fca5a5; }
+        body.red .fastest-badge { background: rgba(60,20,20,0.9); color: #f87171; border-left-color: #ef4444; }
+        body.red .theme-toggle { background: #3a0a0a; border-color: #991b1b; color: #fca5a5; }
+        
+        body.dark {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #cbd5e1;
+        }
+        body.dark .vpn-card { background: #1e293b; border-color: #334155; }
+        body.dark .tab-btn { background: #0f172a; border-color: #334155; color: #94a3b8; }
+        body.dark .tab-btn.active { background: #4f46e5; border-color: #6366f1; color: #fff; }
+        body.dark .status { background: #0f172a; border-left-color: #6366f1; color: #94a3b8; }
+        body.dark .btn { background: #0f172a; border-color: #334155; color: #cbd5e1; }
+        body.dark .btn-primary { background: #4f46e5; border-color: #6366f1; color: #fff; }
+        body.dark .key-area { background: #0f172a; border-color: #334155; color: #94a3b8; }
+        body.dark .user-info { background: #0f172a; border-color: #4f46e5; color: #cbd5e1; }
+        body.dark .stats-row { background: #0f172a; border-color: #334155; color: #94a3b8; }
+        body.dark .person-item { background: #0f172a; border-left-color: #6366f1; color: #94a3b8; }
+        body.dark .person-name { color: #fff; }
+        body.dark .proxy-card { background: #0f172a; border-color: #334155; }
+        body.dark .proxy-type { color: #818cf8; }
+        body.dark .coming-soon { border-top-color: #334155; color: #475569; }
+        body.dark footer { color: #475569; }
+        body.dark .support-btn { background: #0f172a; border-color: #334155; color: #94a3b8; }
+        body.dark .fastest-badge { background: rgba(30,41,59,0.9); color: #818cf8; border-left-color: #6366f1; }
+        body.dark .theme-toggle { background: #0f172a; border-color: #334155; color: #94a3b8; }
+        
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+        .tab-btn { padding: 8px 16px; font-family: monospace; font-size: 0.75rem; cursor: pointer; transition: 0.2s; border-radius: 6px; }
+        .support-btn { position: fixed; top: 20px; right: 20px; padding: 10px 18px; font-family: monospace; font-size: 0.8rem; cursor: pointer; text-decoration: none; transition: 0.2s; z-index: 1000; border-radius: 30px; }
+        .vpn-card { max-width: 700px; width: 100%; padding: 2rem; text-align: center; position: relative; transition: all 0.3s ease; border-radius: 20px; }
+        .fastest-badge { position: absolute; bottom: 12px; left: 12px; font-size: 0.65rem; padding: 4px 8px; border-left: 2px solid; letter-spacing: 1px; z-index: 10; white-space: nowrap; backdrop-filter: blur(2px); border-radius: 4px; }
+        @media (max-width: 550px) { .fastest-badge { font-size: 0.5rem; white-space: normal; max-width: 130px; } .tabs { gap: 5px; } .tab-btn { padding: 5px 10px; font-size: 0.65rem; } }
+        .moon-icon { font-size: 3.5rem; display: inline-block; }
+        h1 { font-size: 2rem; font-weight: 300; letter-spacing: 6px; margin: 0.8rem 0; border-top: 1px solid; border-bottom: 1px solid; display: inline-block; padding: 0.3rem 1rem; }
+        .status { padding: 0.8rem; margin: 1rem 0; font-size: 0.8rem; border-left: 3px solid; text-align: left; border-radius: 8px; }
+        .people-list { text-align: left; margin: 1rem 0; max-height: 300px; overflow-y: auto; padding-right: 10px; }
+        .person-item { padding: 8px 12px; margin-bottom: 8px; font-size: 0.75rem; border-radius: 6px; }
+        .person-name { font-weight: bold; }
+        .stats-row { display: flex; justify-content: space-between; padding: 8px; margin: 10px 0; font-size: 0.7rem; border: 1px solid; border-radius: 8px; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { font-size: 0.7rem; display: block; margin-bottom: 5px; }
+        .input-group input { width: 100%; padding: 10px; font-family: monospace; font-size: 0.85rem; border-radius: 8px; }
+        .btn { padding: 12px 24px; font-family: monospace; cursor: pointer; width: 100%; font-size: 1rem; transition: 0.2s; margin-bottom: 1rem; border-radius: 12px; }
+        .key-area { padding: 1rem; margin: 1rem 0; font-size: 0.7rem; word-break: break-all; border: 1px dashed; border-radius: 12px; }
+        .proxy-card { padding: 12px; margin: 10px 0; text-align: left; border-radius: 12px; }
+        .proxy-type { font-weight: bold; font-size: 0.8rem; }
+        .proxy-details { font-size: 0.65rem; margin-top: 5px; word-break: break-all; }
+        .copy-btn { padding: 4px 8px; margin-top: 8px; font-size: 0.6rem; cursor: pointer; border-radius: 6px; }
+        .coming-soon { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid; font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase; }
+        footer { font-size: 0.6rem; margin-top: 1rem; }
+        .people-list::-webkit-scrollbar { width: 4px; }
+        .user-info { padding: 12px; margin-bottom: 15px; font-size: 0.75rem; text-align: left; border-radius: 12px; }
+        .profile-field { margin: 8px 0; padding: 5px; border-bottom: 1px solid; }
+        .profile-label { display: inline-block; width: 100px; }
+        .theme-toggle { position: fixed; bottom: 20px; right: 20px; padding: 10px 18px; font-family: monospace; font-size: 0.8rem; cursor: pointer; transition: 0.2s; z-index: 1000; border-radius: 30px; border: 1px solid; }
+        .error-message { margin-top: 10px; }
+    </style>
+</head>
+<body class="moon">
+
+<a href="#" id="supportFixedBtn" class="support-btn">🎧 ПОДДЕРЖКА</a>
+<button class="theme-toggle" id="themeToggleBtn">🌙 ЛУННАЯ</button>
+
+<div class="vpn-card">
+    <div class="fastest-badge">⚡ САМЫЙ БЫСТРЫЙ И НАДЕЖНЫЙ ⚡</div>
+
+    <div class="tabs">
+        <button class="tab-btn" data-tab="main">🌙 ОСНОВНОЕ</button>
+        <button class="tab-btn" data-tab="profile">👤 ЛИЧНЫЙ КАБИНЕТ</button>
+        <button class="tab-btn" data-tab="register">📝 РЕГИСТРАЦИЯ</button>
+        <button class="tab-btn" data-tab="people">👥 ЛЮДИ</button>
+        <button class="tab-btn" data-tab="speed">🚀 УСКОРИТЕЛЬ</button>
+        <button class="tab-btn" data-tab="proxy">🔑 ПРОКСИ</button>
+        <button class="tab-btn" data-tab="proxykey">🔐 ПРОКСИ КЛЮЧ</button>
+    </div>
+
+    <!-- ОСНОВНАЯ -->
+    <div id="mainTab" class="tab-content" style="display:block;">
+        <div class="moon-icon">🌙</div>
+        <h1>MOON VPN</h1>
+        <div id="userStatus" class="user-info" style="display:none;"></div>
+        <div class="status">
+            ◉ СТАТУС: ЗАЩИЩЕННОЕ СОЕДИНЕНИЕ<br>
+            ◉ ЛОКАЦИЯ: DE / FRA / SING<br>
+            ◉ ПРОТОКОЛ: WIREGUARD + OBFUSCATION<br>
+            ◉ ЛОГИ: НЕТ
+        </div>
+        <button class="btn btn-primary" id="genBtn">[ СГЕНЕРИРОВАТЬ КОНФИГ ]</button>
+        <div class="key-area" id="keyDisplay">⚡ нажмите «Сгенерировать конфиг»</div>
+        <button class="btn" id="connectBtn">[ СИМУЛЯЦИЯ ПОДКЛЮЧЕНИЯ ]</button>
+        <button class="btn btn-danger" id="logoutBtn" style="display:none;">🚪 ВЫЙТИ</button>
+        <button class="btn" id="supportTabBtnMain">[🆘 ПОДДЕРЖКА (ЧАТ)]</button>
+    </div>
+
+    <!-- ЛИЧНЫЙ КАБИНЕТ -->
+    <div id="profileTab" class="tab-content" style="display:none;">
+        <h1 style="font-size:1.5rem;">👤 ЛИЧНЫЙ КАБИНЕТ</h1>
+        <div id="profileContent"></div>
+        <button class="btn" id="supportTabBtnProfile">[🆘 ПОДДЕРЖКА (ЧАТ)]</button>
+    </div>
+
+    <!-- РЕГИСТРАЦИЯ -->
+    <div id="registerTab" class="tab-content" style="display:none;">
+        <h1 style="font-size:1.5rem;">РЕГИСТРАЦИЯ</h1>
+        <div>
+            <div class="input-group"><label>📧 ЛОГИН (EMAIL)</label><input type="email" id="regEmail" placeholder="user@example.com"></div>
+            <div class="input-group"><label>🔒 ПАРОЛЬ (мин. 4 символа)</label><input type="password" id="regPassword" placeholder="••••••"></div>
+            <div class="input-group"><label>📛 ИМЯ</label><input type="text" id="regName" placeholder="Ваше имя"></div>
+            <button class="btn btn-primary" id="doRegisterBtn">✅ ЗАРЕГИСТРИРОВАТЬСЯ</button>
+            <hr style="margin:15px 0;">
+            <div class="input-group"><label>🔑 УЖЕ ЕСТЬ АККАУНТ? ВОЙДИТЕ</label><input type="email" id="loginEmail" placeholder="Логин"><input type="password" id="loginPassword" placeholder="Пароль" style="margin-top:10px;"></div>
+            <button class="btn" id="doLoginBtn">🔓 ВОЙТИ</button>
+        </div>
+        <div id="registerMessage" class="key-area" style="margin-top:15px;"></div>
+        <button class="btn" id="supportTabBtnRegister">[🆘 ПОДДЕРЖКА (ЧАТ)]</button>
+    </div>
+
+    <!-- ЛЮДИ -->
+    <div id="peopleTab" class="tab-content" style="display:none;">
+        <div class="stats-row"><span>🌍 АКТИВНЫХ ПОЛЬЗОВАТЕЛЕЙ:</span><span id="userCount">2,547</span></div>
+        <div class="stats-row"><span>📡 ТРАФИК ЗА СЕГОДНЯ:</span><span>148.3 TB</span></div>
+        <div class="people-list" id="peopleList"></div>
+        <button class="btn" id="refreshPeopleBtn">⟳ ОБНОВИТЬ СПИСОК</button>
+        <button class="btn" id="supportTabBtnPeople">[🆘 ПОДДЕРЖКА (ЧАТ)]</button>
+    </div>
+
+    <!-- УСКОРИТЕЛЬ -->
+    <div id="speedTab" class="tab-content" style="display:none;">
+        <div class="stats-row"><span>🚀 ТЕКУЩАЯ СКОРОСТЬ:</span><span id="currentSpeed">287 Мбит/с</span></div>
+        <div class="stats-row"><span>⚡ ПИНГ:</span><span id="currentPing">32 мс</span></div>
+        <div style="display:flex; gap:15px; margin:25px 0; flex-wrap:wrap;">
+            <label style="flex:1; padding:15px; border-radius:12px; cursor:pointer;"><input type="radio" name="plan" value="free" checked> 🔓 БЕСПЛАТНЫЙ<div style="font-size:0.6rem;">до 5 Мбит/с</div></label>
+            <label style="flex:1; padding:15px; border-radius:12px; cursor:pointer;"><input type="radio" name="plan" value="premium"> 💎 ПРЕМИУМ<div style="font-size:0.6rem;">безлимит</div></label>
+        </div>
+        <button class="btn btn-primary" id="activateSpeedBtn">АКТИВИРОВАТЬ УСКОРЕНИЕ</button>
+        <div id="speedMessage" style="margin-top:15px; font-size:0.7rem;"></div>
+        <button class="btn" id="supportTabBtnSpeed">[🆘 ПОДДЕРЖКА (ЧАТ)]</button>
+    </div>
+
+    <!-- ПРОКСИ -->
+    <div id="proxyTab" class="tab-content" style="display:none;">
+        <h1 style="font-size:1.5rem;">🔑 ПРОКСИ СЕРВЕРЫ</h1>
+        <div class="status" style="margin-bottom:15px;">◉ ДОСТУПНЫЕ ПРОКСИ (ДЕМО)</div>
+        <div id="proxyList"></div>
+        <button class="btn" id="refreshProxyBtn">⟳ ОБНОВИТЬ ПРОКСИ</button>
+        <button class="btn" id="supportTabBtnProxy">[🆘 ПОДДЕРЖКА (ЧАТ)]</button>
+    </div>
+
+    <!-- ПРОКСИ КЛЮЧ -->
+    <div id="proxykeyTab" class="tab-content" style="display:none;">
+        <h1 style="font-size:1.5rem;">🔐 ПРОКСИ КЛЮЧ</h1>
+        <div class="status" style="margin-bottom:15px;">◉ ВВЕДИТЕ ВАШ ПРОКСИ-КЛЮЧ ДЛЯ АКТИВАЦИИ</div>
+        <div class="input-group">
+            <label>🔑 ПРОКСИ КЛЮЧ</label>
+            <input type="text" id="proxyKeyInput" placeholder="XXXX-XXXX-XXXX-XXXX">
+        </div>
+        <button class="btn btn-primary" id="activateProxyKeyBtn">⚡ АКТИВИРОВАТЬ ПРОКСИ</button>
+        <div id="proxyKeyResult" class="key-area" style="margin-top:15px; min-height:80px;"></div>
+        <button class="btn" id="supportTabBtnProxyKey">[🆘 ПОДДЕРЖКА (ЧАТ)]</button>
+    </div>
+
+    <div class="coming-soon">⚡ MOON VPN — АНОНИМНОСТЬ ⚡</div>
+    <footer>⚡ VPN-ШЛЮЗ</footer>
+</div>
+
+<!-- ЧАТ -->
+<div id="chatModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; justify-content:center; align-items:center;">
+    <div style="background:#0a0a0a; border:1px solid #2a2a2a; max-width:400px; width:90%; padding:1.5rem; text-align:center; border-radius:20px;">
+        <div style="font-size:1.2rem;">💬 ЧАТ ПОДДЕРЖКИ</div>
+        <div style="color:#aaa; margin:15px 0;">Оператор не в сети</div>
+        <textarea rows="3" style="width:100%; background:#050505; border:1px solid #2a2a2a; color:#aaa; padding:8px; border-radius:10px;" placeholder="Сообщение не отправится"></textarea>
+        <button id="closeChatBtn" style="margin-top:15px; background:#1f1f1f; border:1px solid #444; color:#fff; padding:8px 16px; border-radius:10px;">✖ ЗАКРЫТЬ</button>
+    </div>
+</div>
+
+<script>
+    // === ПЕРЕКЛЮЧЕНИЕ ТЕМ ===
+    let themes = ['moon', 'day', 'red', 'dark'];
+    let themeNames = ['🌙 ЛУННАЯ', '☀️ ДНЕВНАЯ', '🔥 КРАСНАЯ', '🌌 ТЁМНАЯ'];
+    let currentThemeIndex = 0;
+    
+    function setTheme(index) {
+        document.body.classList.remove(...themes);
+        document.body.classList.add(themes[index]);
+        document.getElementById('themeToggleBtn').innerHTML = themeNames[index];
+        localStorage.setItem('moonVPN_theme', themes[index]);
+        currentThemeIndex = index;
+    }
+    
+    function nextTheme() {
+        currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+        setTheme(currentThemeIndex);
+    }
+    
+    const savedTheme = localStorage.getItem('moonVPN_theme');
+    if (savedTheme && themes.includes(savedTheme)) {
+        document.body.classList.add(savedTheme);
+        currentThemeIndex = themes.indexOf(savedTheme);
+        document.getElementById('themeToggleBtn').innerHTML = themeNames[currentThemeIndex];
+    } else {
+        setTheme(0);
+    }
+    
+    document.getElementById('themeToggleBtn').addEventListener('click', nextTheme);
+    
+    // === СТРОГАЯ ВАЛИДАЦИЯ ПОЧТЫ ===
+    function isValidEmail(email) {
+        // Жёсткая проверка: имя@домен.зона (зона минимум 2 буквы)
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(email) && email.length >= 6 && email.length <= 100;
+    }
+    
+    // === РЕГИСТРАЦИЯ ===
+    let currentUser = JSON.parse(localStorage.getItem('moonVPN_currentUser') || 'null');
+    
+    function saveUser(user) {
+        let users = JSON.parse(localStorage.getItem('moonVPN_users') || '[]');
+        if (!users.find(u => u.email === user.email)) {
+            users.push(user);
+            localStorage.setItem('moonVPN_users', JSON.stringify(users));
+        }
+    }
+    
+    function findUser(email, password) {
+        let users = JSON.parse(localStorage.getItem('moonVPN_users') || '[]');
+        return users.find(u => u.email === email && u.password === password);
+    }
+    
+    function loginUser(email, password) {
+        let user = findUser(email, password);
+        if (user) {
+            currentUser = user;
+            localStorage.setItem('moonVPN_currentUser', JSON.stringify(user));
+            updateUI();
+            return true;
+        }
+        return false;
+    }
+    
+    function logoutUser() {
+        currentUser = null;
+        localStorage.removeItem('moonVPN_currentUser');
+        updateUI();
+        showMsg('Вы вышли');
+    }
+    
+    function updateUI() {
+        let statusDiv = document.getElementById('userStatus');
+        let logoutBtn = document.getElementById('logoutBtn');
+        if (currentUser) {
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = `✅ ${currentUser.name} (${currentUser.email}) | ТАРИФ: ${currentUser.plan || 'Бесплатный'}`;
+            logoutBtn.style.display = 'block';
+        } else {
+            statusDiv.style.display = 'none';
+            logoutBtn.style.display = 'none';
+        }
+        if (document.getElementById('profileTab').style.display === 'block') loadProfile();
+    }
+    
+    function loadProfile() {
+        let div = document.getElementById('profileContent');
+        if (currentUser) {
+            div.innerHTML = `
+                <div class="user-info">
+                    <div class="profile-field"><span class="profile-label">📛 Имя:</span> ${currentUser.name}</div>
+                    <div class="profile-field"><span class="profile-label">📧 Email:</span> ${currentUser.email}</div>
+                    <div class="profile-field"><span class="profile-label">🌙 Тариф:</span> ${currentUser.plan === 'premium' ? 'Премиум' : 'Бесплатный'}</div>
+                    <div class="profile-field"><span class="profile-label">📅 Дата:</span> ${new Date(currentUser.registered).toLocaleDateString()}</div>
+                </div>
+                <button class="btn" id="upgradeBtn">⬆️ СМЕНИТЬ ТАРИФ</button>
+            `;
+            let btn = document.getElementById('upgradeBtn');
+            if (btn) btn.onclick = () => {
+                currentUser.plan = currentUser.plan === 'premium' ? 'free' : 'premium';
+                localStorage.setItem('moonVPN_currentUser', JSON.stringify(currentUser));
+                let users = JSON.parse(localStorage.getItem('moonVPN_users') || '[]');
+                let idx = users.findIndex(u => u.email === currentUser.email);
+                if (idx !== -1) users[idx].plan = currentUser.plan;
+                localStorage.setItem('moonVPN_users', JSON.stringify(users));
+                updateUI();
+                loadProfile();
+                showMsg(`Тариф: ${currentUser.plan === 'premium' ? 'Премиум' : 'Бесплатный'}`);
+            };
+        } else {
+            div.innerHTML = `<div class="user-info">⚠️ Войдите или зарегистрируйтесь</div>
+                <button class="btn" id="toRegBtn">🔓 К РЕГИСТРАЦИИ</button>`;
+            let btn = document.getElementById('toRegBtn');
+            if (btn) btn.onclick = () => document.querySelector('.tab-btn[data-tab="register"]').click();
+        }
+    }
+    
+    function showMsg(msg, isError = false) {
+        let div = document.getElementById('registerMessage');
+        if (div) {
+            div.innerHTML = msg;
+            div.style.color = isError ? '#ff8888' : '#88ff88';
+            setTimeout(() => div.innerHTML = '', 3000);
+        }
+    }
+    
+    // === ПРОКСИ ===
+    function genProxies() {
+        let types = ['SOCKS5', 'HTTP', 'HTTPS', 'WireGuard', 'Shadowsocks'];
+        let list = [];
+        for (let i = 0; i < 5; i++) {
+            let type = types[Math.floor(Math.random() * types.length)];
+            let ip = `${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}`;
+            let port = Math.floor(Math.random() * 20000) + 1000;
+            let config = type === 'WireGuard' ? `wg.conf: ${ip}:${port}` : `${type}://${ip}:${port}`;
+            list.push({ type, host: ip, port, config, speed: Math.floor(Math.random()*400)+10 });
+        }
+        return list;
+    }
+    
+    let proxies = genProxies();
+    
+    function showProxies() {
+        let container = document.getElementById('proxyList');
+        if (!container) return;
+        let html = '';
+        proxies.forEach(p => {
+            html += `<div class="proxy-card">
+                <div class="proxy-type">🔗 ${p.type} | ⚡ ${p.speed} Мбит/с</div>
+                <div class="proxy-details">📡 ${p.host}:${p.port}</div>
+                <div class="proxy-details">📋 ${p.config}</div>
+                <button class="copy-btn" data-conf="${p.config.replace(/'/g, "\\'")}">📋 КОПИРОВАТЬ</button>
+            </div>`;
+        });
+        container.innerHTML = html;
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.onclick = () => { navigator.clipboard.writeText(btn.getAttribute('data-conf')); showMsg('✅ Скопировано'); };
+        });
+    }
+    
+    // === ПРОКСИ КЛЮЧ ===
+    function activateProxyKey() {
+        let key = document.getElementById('proxyKeyInput').value.trim();
+        let resultDiv = document.getElementById('proxyKeyResult');
+        
+        if (key === '') {
+            resultDiv.innerHTML = '<span style="color:#ff8888;">❌ Введите прокси-ключ</span>';
+            return;
+        }
+        
+        if (key.length >= 10) {
+            let proxyTypes = ['SOCKS5', 'HTTP', 'HTTPS', 'WireGuard'];
+            let randomType = proxyTypes[Math.floor(Math.random() * proxyTypes.length)];
+            let randomIP = `${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}`;
+            let randomPort = Math.floor(Math.random() * 20000) + 1000;
+            
+            resultDiv.innerHTML = `
+                <span style="color:#88ff88;">✅ ПРОКСИ АКТИВИРОВАН!</span><br>
+                🔗 Тип: ${randomType}<br>
+                📡 Сервер: ${randomIP}:${randomPort}<br>
+                🔑 Ваш ключ: ${key}<br>
+                ⚡ Статус: Активен (демо-режим)
+            `;
+        } else {
+            resultDiv.innerHTML = '<span style="color:#ff8888;">❌ Неверный формат ключа. Минимум 10 символов</span>';
+        }
+    }
+    
+    // === ВКЛАДКИ ===
+    let allTabs = document.querySelectorAll('.tab-btn');
+    let contentsMap = {
+        main: document.getElementById('mainTab'),
+        profile: document.getElementById('profileTab'),
+        register: document.getElementById('registerTab'),
+        people: document.getElementById('peopleTab'),
+        speed: document.getElementById('speedTab'),
+        proxy: document.getElementById('proxyTab'),
+        proxykey: document.getElementById('proxykeyTab')
+    };
+    
+    allTabs.forEach(btn => {
+        btn.onclick = () => {
+            let name = btn.getAttribute('data-tab');
+            if (name === 'profile' && !currentUser) {
+                showMsg('Сначала войдите', true);
+                document.querySelector('.tab-btn[data-tab="register"]').click();
+                return;
+            }
+            allTabs.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            for (let key in contentsMap) {
+                contentsMap[key].style.display = 'none';
+            }
+            contentsMap[name].style.display = 'block';
+            if (name === 'people') showPeople();
+            if (name === 'profile') loadProfile();
+            if (name === 'proxy') showProxies();
+        };
+    });
+    
+    // === ЛЮДИ ===
+    let names = ["Алексей","Екатерина","Дмитрий","Анна","Сергей","Мария","Игорь","Ольга","Павел","Юлия","Андрей","Татьяна","Максим","Елена","Николай","Ирина","Денис","Кристина"];
+    let cities = ["Москва","СПб","Новосибирск","Казань","Екатеринбург","Киев","Минск","Берлин","Лондон"];
+    
+    function showPeople() {
+        let container = document.getElementById('peopleList');
+        if (!container) return;
+        let html = '';
+        for (let i = 0; i < 15; i++) {
+            let name = names[Math.floor(Math.random() * names.length)];
+            let city = cities[Math.floor(Math.random() * cities.length)];
+            let days = Math.floor(Math.random() * 90) + 1;
+            html += `<div class="person-item"><div class="person-name">👤 ${name}</div><div class="person-location">📍 ${city} · ${days} дн.</div></div>`;
+        }
+        container.innerHTML = html;
+        let cnt = document.getElementById('userCount');
+        if (cnt) cnt.textContent = (Math.floor(Math.random() * 3000) + 2000).toLocaleString();
+    }
+    
+    function openChat() {
+        document.getElementById('chatModal').style.display = 'flex';
+    }
+    
+    // === КНОПКИ ===
+    document.getElementById('supportTabBtnMain')?.addEventListener('click', openChat);
+    document.getElementById('supportTabBtnProfile')?.addEventListener('click', openChat);
+    document.getElementById('supportTabBtnRegister')?.addEventListener('click', openChat);
+    document.getElementById('supportTabBtnPeople')?.addEventListener('click', openChat);
+    document.getElementById('supportTabBtnSpeed')?.addEventListener('click', openChat);
+    document.getElementById('supportTabBtnProxy')?.addEventListener('click', openChat);
+    document.getElementById('supportTabBtnProxyKey')?.addEventListener('click', openChat);
+    
+    document.getElementById('doRegisterBtn')?.addEventListener('click', () => {
+        let email = document.getElementById('regEmail').value.trim();
+        let pass = document.getElementById('regPassword').value;
+        let name = document.getElementById('regName').value.trim();
+        
+        if (!email || !pass || !name) {
+            showMsg('❌ Заполните все поля', true);
+            return;
+        }
+        if (pass.length < 4) {
+            showMsg('❌ Пароль минимум 4 символа', true);
+            return;
+        }
+        if (!isValidEmail(email)) {
+            showMsg('❌ Введите корректный email (например: user@mail.ru, name@gmail.com)', true);
+            return;
+        }
+        let users = JSON.parse(localStorage.getItem('moonVPN_users') || '[]');
+        if (users.find(u => u.email === email)) {
+            showMsg('❌ Пользователь с таким email уже существует', true);
+            return;
+        }
+        let newUser = { email, password: pass, name, plan: 'free', registered: new Date().toISOString() };
+        saveUser(newUser);
+        showMsg('✅ Регистрация успешна! Теперь войдите');
+        document.getElementById('regEmail').value = '';
+        document.getElementById('regPassword').value = '';
+        document.getElementById('regName').value = '';
+    });
+    
+    document.getElementById('doLoginBtn')?.addEventListener('click', () => {
+        let email = document.getElementById('loginEmail').value.trim();
+        let pass = document.getElementById('loginPassword').value;
+        if (!email || !pass) {
+            showMsg('❌ Введите email и пароль', true);
+            return;
+        }
+        if (!isValidEmail(email)) {
+            showMsg('❌ Введите корректный email (например: user@mail.ru)', true);
+            return;
+        }
+        if (loginUser(email, pass)) {
+            showMsg(`✅ Добро пожаловать, ${currentUser.name}!`);
+            document.querySelector('.tab-btn[data-tab="main"]').click();
+        } else {
+            showMsg('❌ Неверный логин или пароль', true);
+        }
+    });
+    
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+        logoutUser();
+        document.querySelector('.tab-btn[data-tab="register"]').click();
+    });
+    
+    document.getElementById('refreshPeopleBtn')?.addEventListener('click', showPeople);
+    document.getElementById('refreshProxyBtn')?.addEventListener('click', () => { proxies = genProxies(); showProxies(); showMsg('Прокси обновлены'); });
+    
+    document.getElementById('genBtn')?.addEventListener('click', () => {
+        let key = 'MOON-' + Math.random().toString(36).substring(2,10).toUpperCase();
+        document.getElementById('keyDisplay').innerHTML = `🔑 КЛЮЧ: ${key}<br><span style="font-size:0.6rem;">Демо-ключ</span>`;
+    });
+    
+    document.getElementById('connectBtn')?.addEventListener('click', () => {
+        let d = document.getElementById('keyDisplay');
+        d.innerHTML = '🖤 ПОДКЛЮЧЕНИЕ...';
+        setTimeout(() => d.innerHTML = '✅ MOON VPN ACTIVE (ДЕМО)<br>Ваш IP скрыт', 1500);
+    });
+    
+    document.getElementById('activateSpeedBtn')?.addEventListener('click', () => {
+        let plan = document.querySelector('input[name="plan"]:checked').value;
+        let speedSpan = document.getElementById('currentSpeed');
+        let pingSpan = document.getElementById('currentPing');
+        let msg = document.getElementById('speedMessage');
+        if (plan === 'free') {
+            msg.innerHTML = '⚠️ БЕСПЛАТНЫЙ РЕЖИМ: 5 Мбит/с';
+            if(speedSpan) speedSpan.textContent = '5 Мбит/с';
+            if(pingSpan) pingSpan.textContent = '120 мс';
+        } else {
+            msg.innerHTML = '💎 ПРЕМИУМ РЕЖИМ';
+            if(speedSpan) speedSpan.textContent = '487 Мбит/с';
+            if(pingSpan) pingSpan.textContent = '28 мс';
+        }
+        setTimeout(() => {
+            if(speedSpan) speedSpan.textContent = '287 Мбит/с';
+            if(pingSpan) pingSpan.textContent = '32 мс';
+            msg.innerHTML = '';
+        }, 3000);
+    });
+    
+    document.getElementById('activateProxyKeyBtn')?.addEventListener('click', activateProxyKey);
+    document.getElementById('proxyKeyInput')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') activateProxyKey();
+    });
+    
+    let supFixedBtn = document.getElementById('supportFixedBtn');
+    let chatModal = document.getElementById('chatModal');
+    let closeChat = document.getElementById('closeChatBtn');
+    supFixedBtn?.addEventListener('click', (e) => { e.preventDefault(); openChat(); });
+    closeChat?.addEventListener('click', () => { chatModal.style.display = 'none'; });
+    window.addEventListener('click', (e) => { if (e.target === chatModal) chatModal.style.display = 'none'; });
+    
+    updateUI();
+    showPeople();
+    showProxies();
+</script>
+</body>
+</html>
